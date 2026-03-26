@@ -8,7 +8,13 @@ abstract class LeadsEvent extends Equatable {
   @override
   List<Object> get props => [];
 }
-class FetchLeads extends LeadsEvent {}
+class FetchLeads extends LeadsEvent {
+  final List<String> niches;
+  FetchLeads({this.niches = const []});
+
+  @override
+  List<Object> get props => [niches];
+}
 
 // States
 abstract class LeadsState extends Equatable {
@@ -34,7 +40,7 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
     on<FetchLeads>((event, emit) async {
       emit(LeadsLoading());
       try {
-        final leads = await redditService.fetchHotLeads();
+        final leads = await redditService.fetchHotLeads(niches: event.niches);
         emit(LeadsLoaded(leads));
       } catch (e) {
         emit(LeadsError("Failed to fetch leads: $e"));

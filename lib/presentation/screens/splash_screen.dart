@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // 1. Ye import zaroori hai
+import 'dart:async';
 import 'dashboard_screen.dart';
 import 'login_screen.dart';
 
@@ -11,6 +12,8 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Timer? _navigationTimer;
+
   @override
   void initState() {
     super.initState();
@@ -19,22 +22,25 @@ class _SplashScreenState extends State<SplashScreen> {
 
   // Separate function for logic to keep it clean
   Future<void> _navigateToNext() async {
-    // 3 second wait for branding
-    await Future.delayed(const Duration(seconds: 3));
-    
-    // 2. Getting instance of SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('access_token');
+    _navigationTimer = Timer(const Duration(seconds: 3), () async {
+      final prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('access_token');
 
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          // 3. Removed 'const' because 'token' is a variable
-          builder: (context) => token != null ? const DashboardScreen() : const LoginScreen(),
-        ),
-      );
-    }
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => token != null ? const DashboardScreen() : const LoginScreen(),
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _navigationTimer?.cancel();
+    super.dispose();
   }
 
   @override

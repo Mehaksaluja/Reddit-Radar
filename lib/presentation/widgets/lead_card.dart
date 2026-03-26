@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../data/models/lead_model.dart';
 
 class LeadCard extends StatelessWidget {
-  final Map<String, dynamic> lead;
+  final LeadModel lead;
+  final VoidCallback? onGenerateComment;
+  final bool isGeneratingComment;
 
-  const LeadCard({super.key, required this.lead});
+  const LeadCard({
+    super.key,
+    required this.lead,
+    this.onGenerateComment,
+    this.isGeneratingComment = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,11 +29,11 @@ class LeadCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    "r/${lead['sub']}",
+                    "r/${lead.subreddit}",
                     style: const TextStyle(
                       color: Color(0xFFFF4500), // Reddit Orange
                       fontSize: 12,
@@ -37,15 +45,15 @@ class LeadCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: lead['score'] >= 8 
-                        ? Colors.green.withOpacity(0.2) 
-                        : Colors.orange.withOpacity(0.2),
+                    color: lead.intentScore >= 8
+                        ? Colors.green.withValues(alpha: 0.2)
+                        : Colors.orange.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    "Score: ${lead['score']}/10",
+                    "Score: ${lead.intentScore}/10",
                     style: TextStyle(
-                      color: lead['score'] >= 8 ? Colors.greenAccent : Colors.orangeAccent,
+                      color: lead.intentScore >= 8 ? Colors.greenAccent : Colors.orangeAccent,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -56,7 +64,7 @@ class LeadCard extends StatelessWidget {
             const SizedBox(height: 12),
             // Post Title
             Text(
-              lead['title'],
+              lead.title,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -66,7 +74,7 @@ class LeadCard extends StatelessWidget {
             const SizedBox(height: 8),
             // AI Summary
             Text(
-              lead['summary'],
+              lead.summary,
               style: const TextStyle(
                 fontSize: 14,
                 color: Colors.white70,
@@ -81,10 +89,25 @@ class LeadCard extends StatelessWidget {
                 const Icon(Icons.access_time, size: 14, color: Colors.white38),
                 const SizedBox(width: 4),
                 Text(
-                  lead['time'],
+                  lead.timeAgo,
                   style: const TextStyle(color: Colors.white38, fontSize: 12),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: isGeneratingComment ? null : onGenerateComment,
+                icon: isGeneratingComment
+                    ? const SizedBox(
+                        height: 14,
+                        width: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_awesome),
+                label: Text(isGeneratingComment ? 'Generating...' : 'Generate Comment'),
+              ),
             ),
           ],
         ),

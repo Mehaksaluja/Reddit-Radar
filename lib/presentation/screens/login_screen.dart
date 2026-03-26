@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../data/services/auth_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,32 +11,36 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
+  String? _lastAuthError;
 
   Future<void> _handleLogin() async {
     setState(() => _isLoading = true);
-    
+
     final authService = AuthService();
-    final token = await authService.loginWithReddit();
-
-    if (token != null) {
-      // Token save karna local storage mein
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('access_token', token);
-
-      if (mounted) {
+    try {
+      final token = await authService.loginWithReddit();
+      if (token != null && mounted) {
         Navigator.pushReplacement(
-          context, 
-          MaterialPageRoute(builder: (context) => const DashboardScreen())
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
         );
-      }
-    } else {
-      if (mounted) {
+      } else if (mounted) {
+        setState(() => _lastAuthError = 'Token is null after OAuth callback.');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login Failed. Try again.")),
+          const SnackBar(content: Text('Login failed: token is null.')),
         );
       }
+    } catch (e) {
+      if (mounted) {
+        final message = e.toString();
+        setState(() => _lastAuthError = message);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Login failed: $message")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    setState(() => _isLoading = false);
   }
 
   @override
@@ -61,6 +64,22 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(color: Colors.white54),
             ),
             const SizedBox(height: 50),
+            if (_lastAuthError != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+                ),
+                child: Text(
+                  _lastAuthError!,
+                  style: const TextStyle(fontSize: 12, color: Colors.redAccent),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             _isLoading 
               ? const CircularProgressIndicator(color: Color(0xFFFF4500))
               : ElevatedButton.icon(
